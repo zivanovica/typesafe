@@ -1,3 +1,17 @@
+const validateType = ({field, value, fieldType, allowNull}) => {
+    if (null === value && false === allowNull) {
+        throw new Error(`Property "${field}" or it's item is not nullable`);
+    }
+
+    if (
+        null !== fieldType && null !== value && undefined !== value && value.constructor !== fieldType
+    ) {
+        throw new TypeError(
+            `Invalid property or it's item type "${field}" expected "${fieldType.name}" got "${value.constructor.name}"`
+        );
+    }
+};
+
 /**
  * Set type safety to object.
  *
@@ -20,6 +34,18 @@ const makeTypeSafe = function (source, definition, {unknown = true} = {}) {
                     : fieldDefinition
             );
 
+            const fieldItemType = (
+                typeof fieldDefinition.itemType === 'undefined'
+                    ? null
+                    : fieldDefinition.itemType
+            );
+
+            const fieldItemAllowNull = (
+                typeof fieldDefinition.itemAllowNull === 'undefined'
+                    ? true
+                    : Boolean(fieldDefinition.itemAllowNull)
+            );
+
             const allowNull = (
                 typeof fieldDefinition.allowNull === 'undefined'
                     ? true
@@ -34,16 +60,17 @@ const makeTypeSafe = function (source, definition, {unknown = true} = {}) {
 
             Object.defineProperty(sourceObject, field, {
                 set(value) {
-                    if (null === value && false === allowNull) {
-                        throw new Error(`Property "${field}" is not nullable`);
-                    }
+                    validateType({ field, value, allowNull, fieldType });
 
-                    if (
-                        null !== fieldType && null !== value && undefined !== value && value.constructor !== fieldType
-                    ) {
-                        throw new TypeError(
-                            `Invalid property type expected "${fieldType.name}" got "${value.constructor.name}"`
-                        );
+                    if (value instanceof Array && null !== fieldItemType) {
+                        value.forEach((item) => {
+                            validateType({
+                                field,
+                                fieldType: fieldItemType,
+                                allowNull: fieldItemAllowNull,
+                                value: item
+                            });
+                        });
                     }
 
                     fieldValue = value;

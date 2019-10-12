@@ -21,11 +21,19 @@ user.email = 'asd';
 const anyObject = makeTypeSafe({}, {
     min: Number,
     max: {
+        allowNull: true,
         type: Number,
         defaultValue: 44,
     },
+    params: {
+        type: Array,
+        itemType: String,
+        itemAllowNull: false,
+    }
 }, { unknown: false });
 
 anyObject.min = 0;
+anyObject.max = null;
+anyObject.params = ['ad', '2'];
 
 console.log(anyObject.max);
