@@ -1,0 +1,11 @@
+{
+  "name": "typesafe",
+  "version": "1.0.0",
+  "description": "Wrapper that allows javascript classes and objects to have strict type properties.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Aleksandar Zivanovic <coapsyfactor@gmail.com>",
+  "license": "ISC"
+}
