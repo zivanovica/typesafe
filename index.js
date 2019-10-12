@@ -3,9 +3,12 @@
  *
  * @param {*} source Object to which type safety will be applied on.
  * @param {Object} definition Type safety definition.
+ * @param {{unknown: boolean}} options Additional options.
  * @returns {*} source object.
  */
-const makeTypeSafe = function (source, definition) {
+const makeTypeSafe = function (source, definition, {unknown = true} = {}) {
+    let sourceObject = source;
+
     Object
         .entries(definition)
         .forEach(([field, fieldDefinition]) => {
@@ -23,13 +26,21 @@ const makeTypeSafe = function (source, definition) {
                     : Boolean(fieldDefinition.allowNull)
             );
 
-            Object.defineProperty(source, field, {
+            const defaultValue = (
+                typeof fieldDefinition.defaultValue === 'undefined'
+                    ? undefined
+                    : fieldDefinition.defaultValue
+            );
+
+            Object.defineProperty(sourceObject, field, {
                 set(value) {
-                    if (value === null && false === allowNull) {
+                    if (null === value && false === allowNull) {
                         throw new Error(`Property "${field}" is not nullable`);
                     }
 
-                    if (fieldType !== null && value !== null && value.constructor !== fieldType) {
+                    if (
+                        null !== fieldType && null !== value && undefined !== value && value.constructor !== fieldType
+                    ) {
                         throw new TypeError(
                             `Invalid property type expected "${fieldType.name}" got "${value.constructor.name}"`
                         );
@@ -38,19 +49,31 @@ const makeTypeSafe = function (source, definition) {
                     fieldValue = value;
                 },
                 get() {
-                    return fieldValue;
+                    return typeof fieldValue === 'undefined' && defaultValue || fieldValue;
                 }
             });
 
-            typeof source[field] !== 'undefined' && (source[field] = source[field]);
+            sourceObject[field] = sourceObject[field];
         });
 
-    return source;
+    if (false === unknown) {
+        sourceObject = new Proxy(sourceObject, {
+            set: (target, property, value) => {
+                if (typeof definition[property] === 'undefined') {
+                    throw new Error(`Property "${property}" not allowed.`);
+                }
+
+                target[property] = value;
+            }
+        });
+    }
+
+    return sourceObject;
 };
 
 class TypeSafe {
     constructor(definition) {
-        if (new.target === TypeSafe) {
+        if (TypeSafe === new.target) {
             throw new TypeError(`TypeSafe is abstract class, therefor it cannot be instantiated.`);
         }
 
