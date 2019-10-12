@@ -28,39 +28,17 @@ const makeTypeSafe = function (source, definition, {unknown = true} = {}) {
         .forEach(([field, fieldDefinition]) => {
             let fieldValue = undefined;
 
-            const fieldType = (
-                typeof fieldDefinition === 'object'
-                    ? (fieldDefinition.type || null)
-                    : fieldDefinition
-            );
-
-            const fieldItemType = (
-                typeof fieldDefinition.itemType === 'undefined'
-                    ? null
-                    : fieldDefinition.itemType
-            );
-
-            const fieldItemAllowNull = (
-                typeof fieldDefinition.itemAllowNull === 'undefined'
-                    ? true
-                    : Boolean(fieldDefinition.itemAllowNull)
-            );
-
-            const allowNull = (
-                typeof fieldDefinition.allowNull === 'undefined'
-                    ? true
-                    : Boolean(fieldDefinition.allowNull)
-            );
-
-            const defaultValue = (
-                typeof fieldDefinition.defaultValue === 'undefined'
-                    ? undefined
-                    : fieldDefinition.defaultValue
-            );
+            const {
+                type: fieldType = null,
+                itemType: fieldItemType = null,
+                itemAllowNull: fieldItemAllowNull = true,
+                allowNull = true,
+                defaultValue = undefined
+            } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
 
             Object.defineProperty(sourceObject, field, {
                 set(value) {
-                    validateType({ field, value, allowNull, fieldType });
+                    validateType({field, value, allowNull, fieldType});
 
                     if (value instanceof Array && null !== fieldItemType) {
                         value.forEach((item) => {
@@ -77,7 +55,7 @@ const makeTypeSafe = function (source, definition, {unknown = true} = {}) {
                 },
                 get() {
                     return typeof fieldValue === 'undefined' && defaultValue || fieldValue;
-                }
+                },
             });
 
             sourceObject[field] = sourceObject[field];

@@ -21,7 +21,7 @@ user.email = 'asd';
 const anyObject = makeTypeSafe({}, {
     min: Number,
     max: {
-        allowNull: true,
+        allowNull: false,
         type: Number,
         defaultValue: 44,
     },
@@ -33,7 +33,7 @@ const anyObject = makeTypeSafe({}, {
 }, { unknown: false });
 
 anyObject.min = 0;
-anyObject.max = null;
+anyObject.max = 2;
 anyObject.params = ['ad', '2'];
 
 console.log(anyObject.max);
