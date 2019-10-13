@@ -1,10 +1,21 @@
 {
-  "name": "typesafe",
-  "version": "1.0.0",
+  "name": "@zveket3/typesafe",
+  "version": "1.0.2",
   "description": "Wrapper that allows javascript classes and objects to have strict type properties.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "typesafe",
+    "strict",
+    "typed",
+    "strict type",
+    "exacty"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CoaPsyFactor/typesafe.git"
   },
   "author": "Aleksandar Zivanovic <coapsyfactor@gmail.com>",
   "license": "ISC"
