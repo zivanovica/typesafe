@@ -37,12 +37,20 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
         .entries(definition)
         .forEach(([field, fieldDefinition]) => {
             const {
-                type: fieldType = null,
-                itemType: fieldItemType = null,
-                itemAllowNull: fieldItemAllowNull = true,
+                type = null,
                 allowNull = true,
                 defaultValue = undefined
             } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
+
+            let fieldType = type;
+            let fieldItemType = null;
+            let fieldItemAllowNull = true;
+
+            if (type instanceof Array) {
+                fieldType = Array;
+
+                [{ type: fieldItemType = null, allowNull: fieldItemAllowNull = true }] = type;
+            }
 
             const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
             const {name: fieldItemTypeName = 'null'} = null === fieldItemType ? {} : fieldItemType;

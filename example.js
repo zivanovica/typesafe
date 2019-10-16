@@ -26,9 +26,10 @@ const anyObject = makeTypeSafe({}, {
         defaultValue: 44,
     },
     params: {
-        type: Array,
-        itemType: String,
-        itemAllowNull: false,
+        type: Array({
+            type: String,
+            allowNull: false,
+        }),
     }
 }, { unknown: false });
 
@@ -36,4 +37,4 @@ anyObject.min = 0;
 anyObject.max = 2;
 anyObject.params = ['ad', '2'];
 
-console.log(anyObject.max);
+console.log(anyObject.params);
