@@ -1,6 +1,6 @@
 {
   "name": "@zveket3/typesafe",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Wrapper that allows javascript classes and objects to have strict type properties.",
   "main": "index.js",
   "scripts": {

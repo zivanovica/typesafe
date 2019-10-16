@@ -31,13 +31,11 @@ const validateType = ({value, fieldType, allowNull, error}) => {
 const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) {
     const {unknown = true} = options;
 
-    let sourceObject = source;
+    const properties = {};
 
     Object
         .entries(definition)
         .forEach(([field, fieldDefinition]) => {
-            let fieldValue = undefined;
-
             const {
                 type: fieldType = null,
                 itemType: fieldItemType = null,
@@ -49,54 +47,66 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
             const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
             const {name: fieldItemTypeName = 'null'} = null === fieldItemType ? {} : fieldItemType;
 
-            Object.defineProperty(sourceObject, field, {
-                set(value) {
-                    const valueTypeName = value && value.constructor.name || 'null';
+            properties[field] = {
+                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
+            };
+        });
 
-                    validateType({
-                        value,
-                        allowNull,
-                        fieldType,
-                        error: `Invalid "${field}" property type, expected "${fieldTypeName}" got "${valueTypeName}"`,
-                    });
+    /**
+     *  Validate is property available in source object, throw error if not.
+     *
+     * @param {string} property Name of property.
+     * @param {boolean} unknown Flag that determines are unknown properties allowed.
+     *
+     * @throws TypeError
+     */
+    const validatePropertyExistence = ({property, unknown = true} = {}) => {
+        if (false === unknown && typeof properties[property] === 'undefined') {
+            throw new TypeError(`Property "${property}" does not exist.`);
+        }
+    };
 
-                    if (value instanceof Array && null !== fieldItemType) {
-                        value.forEach((item) => {
-                            const itemTypeName = item && item.constructor.name || 'null';
+    return new Proxy(source, {
+        set: (target, property, value) => {
+            validatePropertyExistence({ property, unknown });
 
-                            validateType({
-                                field,
-                                fieldType: fieldItemType,
-                                allowNull: fieldItemAllowNull,
-                                value: item,
-                                error: `Invalid "${field}" property item type, expected "${fieldItemTypeName}" got "${itemTypeName}"`
-                            });
-                        });
-                    }
+            const {
+                fieldType = null, fieldItemType = null, fieldItemAllowNull = true,
+                allowNull = null, defaultValue = undefined, fieldTypeName = 'null', fieldItemTypeName = 'null'
+            } = properties[property] || {};
 
-                    fieldValue = value;
-                },
-                get() {
-                    return typeof fieldValue === 'undefined' && defaultValue || fieldValue;
-                },
+            const valueTypeName = value && value.constructor.name || 'null';
+
+            validateType({
+                value,
+                allowNull,
+                fieldType,
+                error: `Invalid "${property}" property type, expected "${fieldTypeName}" got "${valueTypeName}"`,
             });
 
-            sourceObject[field] = sourceObject[field];
-        });
+            if (value instanceof Array && null !== fieldItemType) {
+                value.forEach((item) => {
+                    const itemTypeName = item && item.constructor.name || 'null';
 
-    if (false === unknown) {
-        sourceObject = new Proxy(sourceObject, {
-            set: (target, property, value) => {
-                if (typeof definition[property] === 'undefined') {
-                    throw new TypeError(`Property "${property}" not allowed.`);
-                }
-
-                target[property] = value;
+                    validateType({
+                        fieldType: fieldItemType,
+                        allowNull: fieldItemAllowNull,
+                        value: item,
+                        error: `Invalid "${property}" property item type, expected "${fieldItemTypeName}" got "${itemTypeName}"`
+                    });
+                });
             }
-        });
-    }
 
-    return sourceObject;
+            target[property] = value;
+        },
+        get: (target, property) => {
+            validatePropertyExistence({ property, unknown });
+
+            return typeof target[property] === 'undefined'
+                ? (properties[property] && properties[property].defaultValue)
+                : target[property];
+        }
+    });
 };
 
 class TypeSafe {
