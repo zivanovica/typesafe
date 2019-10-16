@@ -49,7 +49,7 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
             if (type instanceof Array) {
                 fieldType = Array;
 
-                [{ type: fieldItemType = null, allowNull: fieldItemAllowNull = true }] = type;
+                [{type: fieldItemType = null, allowNull: fieldItemAllowNull = true}] = type;
             }
 
             const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
@@ -76,11 +76,10 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
 
     return new Proxy(source, {
         set: (target, property, value) => {
-            validatePropertyExistence({ property, unknown });
+            validatePropertyExistence({property, unknown});
 
             const {
-                fieldType = null, fieldItemType = null, fieldItemAllowNull = true,
-                allowNull = null, defaultValue = undefined, fieldTypeName = 'null', fieldItemTypeName = 'null'
+                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
             } = properties[property] || {};
 
             const valueTypeName = value && value.constructor.name || 'null';
@@ -108,7 +107,7 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
             target[property] = value;
         },
         get: (target, property) => {
-            validatePropertyExistence({ property, unknown });
+            validatePropertyExistence({property, unknown});
 
             return typeof target[property] === 'undefined'
                 ? (properties[property] && properties[property].defaultValue)

@@ -1,4 +1,4 @@
-const { TypeSafe, makeTypeSafe } = require('./');
+const {TypeSafe, makeTypeSafe} = require('./');
 
 class User extends TypeSafe {
     constructor() {
@@ -31,10 +31,10 @@ const anyObject = makeTypeSafe({}, {
             allowNull: false,
         }),
     }
-}, { unknown: false });
+}, {unknown: false});
 
 anyObject.min = 0;
 anyObject.max = 2;
 anyObject.params = ['ad', '2'];
 
-console.log(anyObject.params);
+console.log(anyObject.params, anyObject.max);
