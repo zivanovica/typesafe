@@ -37,9 +37,7 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
         .entries(definition)
         .forEach(([field, fieldDefinition]) => {
             const {
-                type = null,
-                allowNull = true,
-                defaultValue = undefined
+                type = null, allowNull = true, defaultValue = undefined
             } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
 
             let fieldType = type;
@@ -117,12 +115,12 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
 };
 
 class TypeSafe {
-    constructor(definition) {
+    constructor(definition, options = {}) {
         if (TypeSafe === new.target) {
             throw new TypeError(`TypeSafe is abstract class, therefor it cannot be instantiated.`);
         }
 
-        makeTypeSafe(this, definition);
+        makeTypeSafe(this, definition, options);
     }
 }
 

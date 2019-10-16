@@ -9,7 +9,7 @@ class User extends TypeSafe {
                 allowNull: false,
             },
             age: Number,
-        });
+        }, { unknown: false });
     }
 }
 
@@ -30,7 +30,7 @@ const anyObject = makeTypeSafe({}, {
             type: String,
             allowNull: false,
         }),
-    }
+    },
 }, {unknown: false});
 
 anyObject.min = 0;
