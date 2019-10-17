@@ -1,6 +1,12 @@
 const {MakeClassTypeSafe} = require('../');
 
 class User {
+    constructor(name, email, age) {
+        this.name = name || 'Guest';
+        this.email = email || 'none';
+        this.age = age || 18;
+    }
+
     getDetails() {
         return [
             this.name,

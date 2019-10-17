@@ -1,11 +1,7 @@
 const { makeTypeSafe } = require('../');
 const User = require('./ClassExample');
 
-const user = new User();
-
-user.name = 'Aleksandar';
-user.email = 'coapsyfactor@gmail.com';
-user.age = 25;
+const user = new User('Aleksandar', 'coapsyfactor@gmail.com', 25);
 
 console.log(user.getDetails());
 
