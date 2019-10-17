@@ -126,17 +126,23 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
     return sourceObject;
 };
 
-class TypeSafe {
-    constructor(definition) {
-        if (TypeSafe === new.target) {
-            throw new TypeError(`TypeSafe is abstract class, therefor it cannot be instantiated.`);
-        }
+/**
+ * Apply type safety on class.
+ * @param {function} actualClass Class constructor.
+ * @param {object} definition Property definition.
+ * @param {object} options Additional options.
+ * @returns {function(...[*]): *} Constructor.
+ * @constructor
+ */
+const TypeSafeExtend = (actualClass, definition, options = {}) => {
+    return function (...arguments) {
+        const actualClassBind = actualClass.bind(null, ...arguments);
 
-        makeTypeSafe(this, definition);
+        return makeTypeSafe(new actualClassBind(), definition, options);
     }
-}
+};
 
 module.exports = {
     makeTypeSafe,
-    TypeSafe,
+    TypeSafeExtend,
 };
