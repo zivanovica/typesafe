@@ -18,6 +18,21 @@ const validateType = ({value, fieldType, allowNull, error}) => {
 };
 
 /**
+ *  Validate is property available in source object, throw error if not.
+ *
+ * @param {object} definition Property definition.
+ * @param {string} property Name of property.
+ * @param {boolean} unknown Flag that determines are unknown properties allowed.
+ *
+ * @throws TypeError
+ */
+const validatePropertyExistence = ({definition, property} = {}) => {
+    if (typeof definition[property] === 'undefined') {
+        throw new TypeError(`Property "${property}" does not exist.`);
+    }
+};
+
+/**
  * Set type safety to object.
  *
  * @param {Object} source Object to which type safety will be applied on.
@@ -31,11 +46,11 @@ const validateType = ({value, fieldType, allowNull, error}) => {
 const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) {
     const {unknown = true} = options;
 
-    const properties = {};
+    let sourceObject = source;
 
     Object
         .entries(definition)
-        .forEach(([field, fieldDefinition]) => {
+        .forEach(([property, fieldDefinition]) => {
             const {
                 type = null, allowNull = true, defaultValue = undefined
             } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
@@ -53,74 +68,71 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
             const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
             const {name: fieldItemTypeName = 'null'} = null === fieldItemType ? {} : fieldItemType;
 
-            properties[field] = {
-                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
-            };
-        });
+            let propertyValue = undefined;
 
-    /**
-     *  Validate is property available in source object, throw error if not.
-     *
-     * @param {string} property Name of property.
-     * @param {boolean} unknown Flag that determines are unknown properties allowed.
-     *
-     * @throws TypeError
-     */
-    const validatePropertyExistence = ({property, unknown = true} = {}) => {
-        if (false === unknown && typeof properties[property] === 'undefined') {
-            throw new TypeError(`Property "${property}" does not exist.`);
-        }
-    };
-
-    return new Proxy(source, {
-        set: (target, property, value) => {
-            validatePropertyExistence({property, unknown});
-
-            const {
-                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
-            } = properties[property] || {};
-
-            const valueTypeName = value && value.constructor.name || 'null';
-
-            validateType({
-                value,
-                allowNull,
-                fieldType,
-                error: `Invalid "${property}" property type, expected "${fieldTypeName}" got "${valueTypeName}"`,
-            });
-
-            if (value instanceof Array && null !== fieldItemType) {
-                value.forEach((item) => {
-                    const itemTypeName = item && item.constructor.name || 'null';
+            Object.defineProperty(source, property, {
+                configurable: false,
+                enumerable: true,
+                set: (value) => {
+                    const valueTypeName = value && value.constructor.name || 'null';
 
                     validateType({
-                        fieldType: fieldItemType,
-                        allowNull: fieldItemAllowNull,
-                        value: item,
-                        error: `Invalid "${property}" property item type, expected "${fieldItemTypeName}" got "${itemTypeName}"`
+                        value,
+                        allowNull,
+                        fieldType,
+                        error: `Invalid "${property}" property type, expected "${fieldTypeName}" got "${valueTypeName}"`,
                     });
-                });
-            }
 
-            target[property] = value;
-        },
-        get: (target, property) => {
-            validatePropertyExistence({property, unknown});
+                    if (value instanceof Array && null !== fieldItemType) {
+                        value.forEach((item, index) => {
+                            const itemTypeName = item && item.constructor.name || 'null';
 
-            return typeof target[property] === 'undefined'
-                ? (properties[property] && properties[property].defaultValue)
-                : target[property];
-        }
-    });
+                            validateType({
+                                fieldType: fieldItemType,
+                                allowNull: fieldItemAllowNull,
+                                value: item,
+                                error: `Invalid "${property}" property item[${index}] type, expected "${fieldItemTypeName}" got "${itemTypeName}"`
+                            });
+                        });
+                    }
+
+                    propertyValue = value;
+                },
+                get: () => {
+                    return typeof propertyValue === 'undefined' ? defaultValue : propertyValue;
+                }
+            });
+
+            sourceObject[property] = (
+                typeof sourceObject[property] !== 'undefined' ? sourceObject[property] : defaultValue
+            );
+        });
+
+    if (false === unknown) {
+        sourceObject = new Proxy(sourceObject, {
+            get: (target, property) => {
+                validatePropertyExistence({definition, property});
+
+                return target[property];
+            },
+            set: (target, property, value) => {
+                validatePropertyExistence({definition, property});
+
+                target[property] = value;
+            },
+        });
+    }
+
+    return sourceObject;
 };
 
 class TypeSafe {
-    constructor(definition, options = {}) {
+    constructor(definition) {
         if (TypeSafe === new.target) {
             throw new TypeError(`TypeSafe is abstract class, therefor it cannot be instantiated.`);
         }
 
-        makeTypeSafe(this, definition, options);
+        makeTypeSafe(this, definition);
     }
 }
 
