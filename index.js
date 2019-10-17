@@ -10,8 +10,10 @@
  */
 const validateType = ({value, fieldType, allowNull, error}) => {
     if (
-        (null === value && false === allowNull) ||
-        (null !== fieldType && null !== value && undefined !== value && value.constructor !== fieldType)
+        (
+            (null === value && false === allowNull) ||
+            (null !== fieldType && null !== value && undefined !== value && value.constructor !== fieldType)
+        ) && typeof fieldType !== 'undefined'
     ) {
         throw new TypeError(error);
     }
@@ -20,14 +22,14 @@ const validateType = ({value, fieldType, allowNull, error}) => {
 /**
  *  Validate is property available in source object, throw error if not.
  *
- * @param {object} definition Property definition.
+ * @param {object} properties Defined object properties.
  * @param {string} property Name of property.
  * @param {boolean} unknown Flag that determines are unknown properties allowed.
  *
  * @throws TypeError
  */
-const validatePropertyExistence = ({definition, property} = {}) => {
-    if (typeof definition[property] === 'undefined') {
+const validatePropertyExistence = ({properties, property, unknown = true} = {}) => {
+    if (false === unknown && typeof properties[property] === 'undefined') {
         throw new TypeError(`Property "${property}" does not exist.`);
     }
 };
@@ -46,11 +48,11 @@ const validatePropertyExistence = ({definition, property} = {}) => {
 const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) {
     const {unknown = true} = options;
 
-    let sourceObject = source;
+    const properties = {};
 
     Object
         .entries(definition)
-        .forEach(([property, fieldDefinition]) => {
+        .forEach(([field, fieldDefinition]) => {
             const {
                 type = null, allowNull = true, defaultValue = undefined
             } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
@@ -68,62 +70,53 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
             const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
             const {name: fieldItemTypeName = 'null'} = null === fieldItemType ? {} : fieldItemType;
 
-            let propertyValue = undefined;
+            properties[field] = {
+                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
+            };
+        });
 
-            Object.defineProperty(source, property, {
-                configurable: false,
-                enumerable: true,
-                set: (value) => {
-                    const valueTypeName = value && value.constructor.name || 'null';
+    return new Proxy(source, {
+        set: (target, property, value) => {
+            validatePropertyExistence({properties, property, unknown});
 
-                    validateType({
-                        value,
-                        allowNull,
-                        fieldType,
-                        error: `Invalid "${property}" property type, expected "${fieldTypeName}" got "${valueTypeName}"`,
-                    });
+            const {
+                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
+            } = properties[property] || {};
 
-                    if (value instanceof Array && null !== fieldItemType) {
-                        value.forEach((item, index) => {
-                            const itemTypeName = item && item.constructor.name || 'null';
+            const valueTypeName = value && value.constructor.name || 'null';
 
-                            validateType({
-                                fieldType: fieldItemType,
-                                allowNull: fieldItemAllowNull,
-                                value: item,
-                                error: `Invalid "${property}" property item[${index}] type, expected "${fieldItemTypeName}" got "${itemTypeName}"`
-                            });
-                        });
-                    }
-
-                    propertyValue = value;
-                },
-                get: () => {
-                    return typeof propertyValue === 'undefined' ? defaultValue : propertyValue;
-                }
+            validateType({
+                value,
+                allowNull,
+                fieldType,
+                error: `Invalid "${property}" property type, expected "${fieldTypeName}" got "${valueTypeName}"`,
             });
 
-            sourceObject[property] = (
-                typeof sourceObject[property] !== 'undefined' ? sourceObject[property] : defaultValue
-            );
-        });
+            if (value instanceof Array && null !== fieldItemType) {
+                value.forEach((item, index) => {
+                    const itemTypeName = item && item.constructor.name || 'null';
 
-    if (false === unknown) {
-        sourceObject = new Proxy(sourceObject, {
-            get: (target, property) => {
-                validatePropertyExistence({definition, property});
+                    validateType({
+                        fieldType: fieldItemType,
+                        allowNull: fieldItemAllowNull,
+                        value: item,
+                        error: `Invalid "${property}" property item[${index}] type, expected "${fieldItemTypeName}" got "${itemTypeName}"`
+                    });
+                });
+            }
 
-                return target[property];
-            },
-            set: (target, property, value) => {
-                validatePropertyExistence({definition, property});
+            target[property] = value;
+        },
+        get: (target, property) => {
+            if (typeof target[property] !== 'function') {
+                validatePropertyExistence({properties, property, unknown});
+            }
 
-                target[property] = value;
-            },
-        });
-    }
-
-    return sourceObject;
+            return typeof target[property] === 'undefined'
+                ? (properties[property] && properties[property].defaultValue)
+                : target[property];
+        }
+    });
 };
 
 /**
@@ -134,7 +127,7 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
  * @returns {function(...[*]): *} Constructor.
  * @constructor
  */
-const TypeSafeExtend = (actualClass, definition, options = {}) => {
+const MakeClassTypeSafe = (actualClass, definition, options = {}) => {
     return function (...arguments) {
         const actualClassBind = actualClass.bind(null, ...arguments);
 
@@ -144,5 +137,5 @@ const TypeSafeExtend = (actualClass, definition, options = {}) => {
 
 module.exports = {
     makeTypeSafe,
-    TypeSafeExtend,
+    MakeClassTypeSafe,
 };

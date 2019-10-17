@@ -7,9 +7,7 @@ user.name = 'Aleksandar';
 user.email = 'coapsyfactor@gmail.com';
 user.age = 25;
 
-user.age = 2;
-
-console.log(user);
+console.log(user.getDetails());
 
 const anyObject = makeTypeSafe({}, {
     min: Number,
