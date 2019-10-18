@@ -35,6 +35,35 @@ const validatePropertyExistence = ({ properties, property, unknown = true } = {}
 };
 
 /**
+ * Create definition object generated from provided interfaces.
+ *
+ * @param {Array} interfaces Interfaces.
+ *
+ * @returns {Object} Definition schema.
+ */
+const makeDefinition = (interfaces) => {
+    const definition = {};
+
+    interfaces.forEach((interfaceDefinition) => {
+        Object
+            .entries(interfaceDefinition)
+            .forEach(([ property, value ]) => {
+                value = typeof value === 'object' ? value : { type: value };
+
+                if (typeof definition[property] !== 'undefined' && definition[property].type !== value.type) {
+                    throw new Error(
+                        `Property "${ property }" collision, defined in multiple interfaces with different type.`
+                    );
+                }
+
+                definition[property] = { ...definition[property], ...value };
+            });
+    });
+
+    return definition;
+};
+
+/**
  * Set type safety to object.
  *
  * @param {Object} source Object to which type safety will be applied on.
@@ -53,23 +82,6 @@ const makeTypeSafe = function (source, interfaces, { ...options } = {}) {
     const { unknown = true } = options;
 
     const properties = {};
-    const definition = {};
-
-    interfaces.forEach((interfaceDefinition) => {
-        Object
-            .entries(interfaceDefinition)
-            .forEach(([ property, value ]) => {
-                const { type } = typeof value === 'object' ? value : { type: value };
-
-                if (typeof definition[property] !== 'undefined' && definition[property].type !== type) {
-                    throw new Error(
-                        `Property "${ property }" collision, defined in multiple interfaces with different type.`
-                    );
-                }
-
-                definition[property] = { ...definition[property], ...value };
-            });
-    });
 
     const proxy = new Proxy(source, {
         set: (target, property, value) => {
@@ -115,7 +127,7 @@ const makeTypeSafe = function (source, interfaces, { ...options } = {}) {
     });
 
     Object
-        .entries(definition)
+        .entries(makeDefinition(interfaces))
         .forEach(([ field, fieldDefinition ]) => {
             const {
                 type = null, allowNull = true, defaultValue = undefined
