@@ -81,3 +81,37 @@ For ``Array`` property type
 
 Options:
 - unknown: Flag that determines whether or not can object hold properties that are not defined.
+
+Type Safe Functions
+---
+There is also way to define type safe function.
+Type safe functions take care of arguments passed to function as well as return value from it.
+
+Usage
+```javascript
+const { makeFunctionTypeSafe } = require('@zveket3/typesafe');
+
+const getString = makeFunctionTypeSafe((name, email, age, data) => {
+        return `Name: ${ name }\nEmail: ${ email }\nAge: ${ age }\nData: ` + JSON.stringify(data);
+    },
+    [
+        String, String, { type: Number, allowNull: false }, Array({ type: String, allowNull: false, })
+    ],
+    { returns: { type: String, allowNull: false }, exact: true, name: 'getString' }
+);
+
+console.log(getString('John Mayer', 'john.mayer@mayerscorp.com', 67, [ 'one', 'two', 'null', '1' ]));
+```
+Property definition description
+- type: Parameter type
+- allowNull: Flag that determines whether or not nulling of parameter is allowed
+- defaultValue: Value returned when typeof parameter is undefined
+
+For ``Array`` property type
+- type: Array item type.
+- allowNull: Flag that determines whether or not can item in array be null.
+
+Options:
+- exact: Flag that determines whether or not to expect exact count of arguments
+- name: Function name, default: anonymous
+- returns: Defines return type as well as if null is allowed as result, can be simplified ``returns: Number``

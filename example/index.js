@@ -1,4 +1,4 @@
-const { makeTypeSafe } = require('../');
+const { makeTypeSafe, makeFunctionTypeSafe } = require('../');
 
 const User = require('./ClassExample');
 const user = new User();
@@ -25,3 +25,14 @@ anyObject.max = 2;
 anyObject.params = [ 'ad', '2' ];
 
 console.log(anyObject.params, anyObject.max);
+
+const getString = makeFunctionTypeSafe((name, email, age, data) => {
+        return `Name: ${ name }\nEmail: ${ email }\nAge: ${ age }\nData: ` + JSON.stringify(data);
+    },
+    [
+        String, String, { type: Number, allowNull: false }, Array({ type: String, allowNull: false, })
+    ],
+    { returns: { type: String, allowNull: false }, exact: true, name: 'getString' }
+);
+
+console.log(getString('John Mayer', 'john.mayer@mayerscorp.com', 67, [ 'one', 'two', 'null', '1' ]));
