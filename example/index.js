@@ -1,9 +1,8 @@
 const { makeTypeSafe } = require('../');
 const User = require('./ClassExample');
+const user = new User();
 
-const user = new User('Aleksandar', 'coapsyfactor@gmail.com', 25);
-
-console.log(user.getDetails());
+console.log(user);
 
 const anyObject = makeTypeSafe({}, {
     min: Number,
