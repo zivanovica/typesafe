@@ -1,4 +1,5 @@
 const { makeTypeSafe } = require('../');
+
 const User = require('./ClassExample');
 const user = new User();
 
@@ -17,10 +18,10 @@ const anyObject = makeTypeSafe({}, {
             allowNull: false,
         }),
     },
-}, {unknown: false});
+}, { unknown: false });
 
 anyObject.min = 0;
 anyObject.max = 2;
-anyObject.params = ['ad', '2'];
+anyObject.params = [ 'ad', '2' ];
 
 console.log(anyObject.params, anyObject.max);

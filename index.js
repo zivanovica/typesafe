@@ -8,7 +8,7 @@
  *
  * @throws {TypeError} Validation error.
  */
-const validateType = ({value, fieldType, allowNull, error}) => {
+const validateType = ({ value, fieldType, allowNull, error }) => {
     if (
         (
             (null === value && false === allowNull) ||
@@ -28,9 +28,9 @@ const validateType = ({value, fieldType, allowNull, error}) => {
  *
  * @throws TypeError
  */
-const validatePropertyExistence = ({properties, property, unknown = true} = {}) => {
+const validatePropertyExistence = ({ properties, property, unknown = true } = {}) => {
     if (false === unknown && typeof properties[property] === 'undefined') {
-        throw new TypeError(`Property "${property}" does not exist.`);
+        throw new TypeError(`Property "${ property }" does not exist.`);
     }
 };
 
@@ -45,12 +45,12 @@ const validatePropertyExistence = ({properties, property, unknown = true} = {}) 
  *
  * @throws {TypeError} Validation error.
  */
-const makeTypeSafe = function (source, interfaces, {...options} = {}) {
+const makeTypeSafe = function (source, interfaces, { ...options } = {}) {
     if (false === interfaces instanceof Array) {
-        interfaces = [interfaces];
+        interfaces = [ interfaces ];
     }
 
-    const {unknown = true} = options;
+    const { unknown = true } = options;
 
     const properties = {};
     const definition = {};
@@ -58,22 +58,22 @@ const makeTypeSafe = function (source, interfaces, {...options} = {}) {
     interfaces.forEach((interfaceDefinition) => {
         Object
             .entries(interfaceDefinition)
-            .forEach(([property, value]) => {
-                const {type} = typeof value === 'object' ? value : {type: value};
+            .forEach(([ property, value ]) => {
+                const { type } = typeof value === 'object' ? value : { type: value };
 
                 if (typeof definition[property] !== 'undefined' && definition[property].type !== type) {
                     throw new Error(
-                        `Property "${property}" collision, defined in multiple interfaces with different type.`
+                        `Property "${ property }" collision, defined in multiple interfaces with different type.`
                     );
                 }
 
-                definition[property] = {...definition[property], ...value};
+                definition[property] = { ...definition[property], ...value };
             });
     });
 
     const proxy = new Proxy(source, {
         set: (target, property, value) => {
-            validatePropertyExistence({properties, property, unknown});
+            validatePropertyExistence({ properties, property, unknown });
 
             const {
                 fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
@@ -85,7 +85,7 @@ const makeTypeSafe = function (source, interfaces, {...options} = {}) {
                 value,
                 allowNull,
                 fieldType,
-                error: `Invalid "${property}" property type, expected "${fieldTypeName}" got "${valueTypeName}"`,
+                error: `Invalid "${ property }" property type, expected "${ fieldTypeName }" got "${ valueTypeName }"`,
             });
 
             if (value instanceof Array && null !== fieldItemType) {
@@ -96,7 +96,7 @@ const makeTypeSafe = function (source, interfaces, {...options} = {}) {
                         fieldType: fieldItemType,
                         allowNull: fieldItemAllowNull,
                         value: item,
-                        error: `Invalid "${property}" property item[${index}] type, expected "${fieldItemTypeName}" got "${itemTypeName}"`
+                        error: `Invalid "${ property }" property item[${ index }] type, expected "${ fieldItemTypeName }" got "${ itemTypeName }"`
                     });
                 });
             }
@@ -105,7 +105,7 @@ const makeTypeSafe = function (source, interfaces, {...options} = {}) {
         },
         get: (target, property) => {
             if (typeof target[property] !== 'function') {
-                validatePropertyExistence({properties, property, unknown});
+                validatePropertyExistence({ properties, property, unknown });
             }
 
             return typeof target[property] === 'undefined'
@@ -116,10 +116,10 @@ const makeTypeSafe = function (source, interfaces, {...options} = {}) {
 
     Object
         .entries(definition)
-        .forEach(([field, fieldDefinition]) => {
+        .forEach(([ field, fieldDefinition ]) => {
             const {
                 type = null, allowNull = true, defaultValue = undefined
-            } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
+            } = typeof fieldDefinition === 'object' ? fieldDefinition : { type: fieldDefinition };
 
             let fieldType = type;
             let fieldItemType = null;
@@ -128,11 +128,11 @@ const makeTypeSafe = function (source, interfaces, {...options} = {}) {
             if (type instanceof Array) {
                 fieldType = Array;
 
-                [{type: fieldItemType = null, allowNull: fieldItemAllowNull = true}] = type;
+                [ { type: fieldItemType = null, allowNull: fieldItemAllowNull = true } ] = type;
             }
 
-            const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
-            const {name: fieldItemTypeName = 'null'} = null === fieldItemType ? {} : fieldItemType;
+            const { name: fieldTypeName = 'null' } = null === fieldType ? {} : fieldType;
+            const { name: fieldItemTypeName = 'null' } = null === fieldItemType ? {} : fieldItemType;
 
             properties[field] = {
                 fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName

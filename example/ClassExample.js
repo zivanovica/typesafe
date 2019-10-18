@@ -1,4 +1,4 @@
-const {MakeClassTypeSafe} = require('../');
+const { MakeClassTypeSafe } = require('../');
 
 const UserBasicInterface = {
     name: {
@@ -48,5 +48,5 @@ module.exports = MakeClassTypeSafe(
         UserBasicInterface,
         UserContactInterface,
     ],
-    {unknown: false}
+    { unknown: false }
 );
