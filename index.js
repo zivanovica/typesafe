@@ -170,6 +170,17 @@ const makeTypeSafe = function (source, interfaces, { ...options } = {}) {
         .forEach(([ field, fieldDefinition ]) => {
             properties[field] = makePropertyDefinition(fieldDefinition);
 
+
+            if (typeof source[field] === 'function' && fieldDefinition.type === Function) {
+                const { parameters = [], ...functionOptions } = fieldDefinition;
+
+                proxy[field] = makeFunctionTypeSafe(
+                    source[field].bind(source), parameters, { ...functionOptions, name: field }
+                );
+
+                return;
+            }
+
             proxy[field] = typeof source[field] !== 'undefined' ? source[field] : properties[field].defaultValue;
         });
 

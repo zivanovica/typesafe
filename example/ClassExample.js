@@ -14,6 +14,15 @@ const UserBasicInterface = {
         type: Number,
         defaultValue: NaN,
     },
+    getDetails: {
+        type: Function,
+        parameters: [String],
+        exact: true,
+        returns: {
+            type: Array,
+            allowNull: false
+        }
+    }
 };
 
 const UserContactInterface = {
@@ -33,8 +42,9 @@ class User {
         this.age = age && age;
     }
 
-    getDetails() {
+    getDetails(message) {
         return [
+            message,
             this.name,
             this.email,
             this.age

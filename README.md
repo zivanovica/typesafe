@@ -54,7 +54,16 @@ const PropertyDefinition = {
         type: Number,
         defaultValue: 18
     },
-    attributes: {}
+    attributes: {},
+    getDetails: {
+        type: Function,
+        parameters: [String],
+        exact: true,
+        returns: {
+            type: Array,
+            allowNull: false
+        }
+    }
 };
 
 const AdditionalDefinition = {
