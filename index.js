@@ -1,3 +1,7 @@
+const {
+    TypeSafeInvalidTypeError, TypeSafeInvalidPropertyError, TypeSafePropertyCollisionError
+} = require('./errors');
+
 /**
  * Perform type validation upon provided value.
  *
@@ -15,7 +19,7 @@ const validateType = ({ value, fieldType, allowNull, error }) => {
             (null !== fieldType && null !== value && undefined !== value && value.constructor !== fieldType)
         ) && typeof fieldType !== 'undefined'
     ) {
-        throw new TypeError(error);
+        throw new TypeSafeInvalidTypeError(error);
     }
 };
 
@@ -30,7 +34,7 @@ const validateType = ({ value, fieldType, allowNull, error }) => {
  */
 const validatePropertyExistence = ({ properties, property, unknown = true } = {}) => {
     if (false === unknown && typeof properties[property] === 'undefined') {
-        throw new TypeError(`Property "${ property }" does not exist.`);
+        throw new TypeSafeInvalidPropertyError(`Property "${ property }" does not exist.`);
     }
 };
 
@@ -51,7 +55,7 @@ const makeDefinition = (interfaces) => {
                 value = typeof value === 'object' ? value : { type: value };
 
                 if (typeof definition[property] !== 'undefined' && definition[property].type !== value.type) {
-                    throw new Error(
+                    throw new TypeSafePropertyCollisionError(
                         `Property "${ property }" collision, defined in multiple interfaces with different type.`
                     );
                 }
