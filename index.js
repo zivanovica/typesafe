@@ -38,44 +38,40 @@ const validatePropertyExistence = ({properties, property, unknown = true} = {}) 
  * Set type safety to object.
  *
  * @param {Object} source Object to which type safety will be applied on.
- * @param {Object} definition Type safety definition.
+ * @param {Array|Object} interfaces Interfaces source object is implementing.
  * @param {Object} options Additional options.
  * @param {boolean} options.unknown Flag that determines whether or not to allow parameters that are not defined in definition.
  * @returns {*} source object.
  *
  * @throws {TypeError} Validation error.
  */
-const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) {
+const makeTypeSafe = function (source, interfaces, {...options} = {}) {
+    if (false === interfaces instanceof Array) {
+        interfaces = [interfaces];
+    }
+
     const {unknown = true} = options;
 
     const properties = {};
+    const definition = {};
 
-    Object
-        .entries(definition)
-        .forEach(([field, fieldDefinition]) => {
-            const {
-                type = null, allowNull = true, defaultValue = undefined
-            } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
+    interfaces.forEach((interfaceDefinition) => {
+        Object
+            .entries(interfaceDefinition)
+            .forEach(([property, value]) => {
+                const {type} = typeof value === 'object' ? value : {type: value};
 
-            let fieldType = type;
-            let fieldItemType = null;
-            let fieldItemAllowNull = true;
+                if (typeof definition[property] !== 'undefined' && definition[property].type !== type) {
+                    throw new Error(
+                        `Property "${property}" collision, defined in multiple interfaces with different type.`
+                    );
+                }
 
-            if (type instanceof Array) {
-                fieldType = Array;
+                definition[property] = {...definition[property], ...value};
+            });
+    });
 
-                [{type: fieldItemType = null, allowNull: fieldItemAllowNull = true}] = type;
-            }
-
-            const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
-            const {name: fieldItemTypeName = 'null'} = null === fieldItemType ? {} : fieldItemType;
-
-            properties[field] = {
-                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
-            };
-        });
-
-    return new Proxy(source, {
+    const proxy = new Proxy(source, {
         set: (target, property, value) => {
             validatePropertyExistence({properties, property, unknown});
 
@@ -117,21 +113,50 @@ const makeTypeSafe = function (source, {...definition} = {}, {...options} = {}) 
                 : target[property];
         }
     });
+
+    Object
+        .entries(definition)
+        .forEach(([field, fieldDefinition]) => {
+            const {
+                type = null, allowNull = true, defaultValue = undefined
+            } = typeof fieldDefinition === 'object' ? fieldDefinition : {type: fieldDefinition};
+
+            let fieldType = type;
+            let fieldItemType = null;
+            let fieldItemAllowNull = true;
+
+            if (type instanceof Array) {
+                fieldType = Array;
+
+                [{type: fieldItemType = null, allowNull: fieldItemAllowNull = true}] = type;
+            }
+
+            const {name: fieldTypeName = 'null'} = null === fieldType ? {} : fieldType;
+            const {name: fieldItemTypeName = 'null'} = null === fieldItemType ? {} : fieldItemType;
+
+            properties[field] = {
+                fieldType, fieldItemType, fieldItemAllowNull, allowNull, defaultValue, fieldTypeName, fieldItemTypeName
+            };
+
+            proxy[field] = typeof source[field] !== 'undefined' ? source[field] : defaultValue;
+        });
+
+    return proxy;
 };
 
 /**
  * Apply type safety on class.
  * @param {function} actualClass Class constructor.
- * @param {object} definition Property definition.
+ * @param {Array|object} interfaces Interfaces actualClass is implementing.
  * @param {object} options Additional options.
  * @returns {function(...[*]): *} Constructor.
  * @constructor
  */
-const MakeClassTypeSafe = (actualClass, definition, options = {}) => {
+const MakeClassTypeSafe = (actualClass, interfaces, options = {}) => {
     return function (...arguments) {
         const actualClassBind = actualClass.bind(null, ...arguments);
 
-        return makeTypeSafe(new actualClassBind(), definition, options);
+        return makeTypeSafe(new actualClassBind(), interfaces, options);
     }
 };
 
