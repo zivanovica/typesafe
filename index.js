@@ -118,12 +118,20 @@ const makeTypeSafe = function (source, interfaces, { ...options } = {}) {
         interfaces = [ interfaces ];
     }
 
+    const implementingInterfaces = interfaces
+        .map((interfaceDefinition) => (JSON.stringify(interfaceDefinition)))
+        .reduce((result = {}, current) => ({ ...result, [current]: true }), {});
+
     const { unknown = true } = options;
 
     const properties = {};
 
     const proxy = new Proxy(source, {
         set: (target, property, value) => {
+            if ('__interfaces__' === property) {
+                throw new Error(`Reserved property name cannot be changed`);
+            }
+
             validatePropertyExistence({ properties, property, unknown });
 
             const {
@@ -155,6 +163,10 @@ const makeTypeSafe = function (source, interfaces, { ...options } = {}) {
             target[property] = value;
         },
         get: (target, property) => {
+            if ('__interfaces__' === property) {
+                return { ...implementingInterfaces };
+            }
+
             if (typeof target[property] !== 'function') {
                 validatePropertyExistence({ properties, property, unknown });
             }
@@ -169,7 +181,6 @@ const makeTypeSafe = function (source, interfaces, { ...options } = {}) {
         .entries(makeDefinition(interfaces))
         .forEach(([ field, fieldDefinition ]) => {
             properties[field] = makePropertyDefinition(fieldDefinition);
-
 
             if (typeof source[field] === 'function' && fieldDefinition.type === Function) {
                 const { parameters = [], ...functionOptions } = fieldDefinition;
@@ -286,8 +297,21 @@ const MakeClassTypeSafe = (actualClass, interfaces, options = {}) => {
     }
 };
 
+/**
+ * Checks whether or not provided object implements interface.
+ *
+ * @param {object} object Checking object.
+ * @param {array|object} interfaceDefinition Expected interface.
+ *
+ * @returns {boolean} Flag.
+ */
+const isInstanceOf = (object, interfaceDefinition) => {
+    return object.__interfaces__[JSON.stringify(interfaceDefinition)] || false;
+};
+
 module.exports = {
     makeTypeSafe,
     makeFunctionTypeSafe,
     MakeClassTypeSafe,
+    isInstanceOf,
 };

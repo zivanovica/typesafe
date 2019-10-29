@@ -16,7 +16,7 @@ const UserBasicInterface = {
     },
     getDetails: {
         type: Function,
-        parameters: [String],
+        parameters: [ String ],
         exact: true,
         returns: {
             type: Array,
@@ -34,6 +34,28 @@ const UserContactInterface = {
         defaultValue: '00-00000',
     }
 };
+
+const AdminUserInterface = {
+    level: Number,
+    getUsers: {
+        type: Function,
+        parameters: [ Number ], // Role level
+        exact: true,
+        returns: {
+            type: Array,
+            allowNull: false
+        }
+    },
+    removeUser: {
+        type: Function,
+        parameters: [ Number ],
+        exact: true,
+        returns: {
+            type: Boolean,
+            allowNull: true,
+        }
+    }
+}
 
 class User {
     constructor(name, email, age) {
@@ -60,3 +82,9 @@ module.exports = MakeClassTypeSafe(
     ],
     { unknown: false }
 );
+
+module.exports.interfaces = {
+    UserBasicInterface,
+    UserContactInterface,
+    AdminUserInterface,
+};

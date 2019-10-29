@@ -1,7 +1,14 @@
-const { makeTypeSafe, makeFunctionTypeSafe } = require('../');
+const { makeTypeSafe, makeFunctionTypeSafe, isInstanceOf } = require('../');
 
 const User = require('./ClassExample');
+const { UserContactInterface, UserBasicInterface, AdminUserInterface } = User.interfaces;
 const user = new User();
+
+console.log(
+    isInstanceOf(user, UserContactInterface),
+    isInstanceOf(user, UserBasicInterface),
+    isInstanceOf(user, AdminUserInterface)
+);
 
 console.log(user.getDetails('coa'));
 
@@ -35,6 +42,6 @@ const getString = makeFunctionTypeSafe((name, email, age, data) => {
     { returns: { type: String, allowNull: false }, exact: true, name: 'getString' }
 );
 
-console.log(getString('John Mayer', 'john.mayer@mayerscorp.com', 67, [ 'one', 'two', 'null', '1']));
+console.log(getString('John Mayer', 'john.mayer@mayerscorp.com', 67, [ 'one', 'two', 'null', '1' ]));
 
 // console.log(Function({params: []}));
