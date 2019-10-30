@@ -124,3 +124,24 @@ Options:
 - exact: Flag that determines whether or not to expect exact count of arguments
 - name: Function name, default: anonymous
 - returns: Defines return type as well as if null is allowed as result, can be simplified ``returns: Number``
+
+Check whether or not some object implements certain interface.
+```javascript
+const { makeTypeSafe, isInstanceOf } = require('@zvekete/typesafe');
+
+const PropertyDefinition = {
+    name: String,
+    attributes: Array({
+        type: String,
+        allowNull: false
+    }),
+};
+const AnotherPropertyDefinition = {
+    additionalData: Array,
+}
+
+const object = makeTypeSafe({}, PropertyDefinition);
+
+console.log(isInstanceOf(object, PropertyDefinition)); // true
+console.log(isInstanceOf(object, AnotherPropertyDefinition)); // false
+```
