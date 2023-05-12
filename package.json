@@ -15,8 +15,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/CoaPsyFactor/typesafe.git"
+    "url": "https://github.com/zivanovica/typesafe.git"
   },
-  "author": "Aleksandar Zivanovic <coapsyfactor@gmail.com>",
+  "author": "Aleksandar Zivanovic <zivanovic.aleksandar.zve@gmail.com>",
   "license": "ISC"
 }
